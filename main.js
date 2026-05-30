@@ -4,6 +4,7 @@ const path = require('path');
 // 🔥 PARCHE OPCIONAL: Si la pantalla sigue tendiendo a quedarse en blanco o parpadear,
 // descomentá la siguiente línea eliminando las dos barras '//' para desactivar la aceleración por hardware:
 // app.disableHardwareAcceleration();
+app.disableHardwareAcceleration();
 
 function crearVentana() {
   const ventanaPrincipal = new BrowserWindow({

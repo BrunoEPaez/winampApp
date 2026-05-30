@@ -1,23 +1,30 @@
 <div class="workspace-layout">
     <div class="sidebar">
         <div class="sidebar-title">Proyectos</div>
-        <button onclick="abrirSelectorCarpeta('code')" style="font-size:10px; margin-bottom:10px; width:100%;">📁 CARPETA</button>
+        <button onclick="window.abrirSelectorCarpeta('code')" style="font-size:10px; margin-bottom:10px; width:100%;">📁 CARPETA</button>
+        
+        <div style="display: flex; gap: 4px; margin-bottom: 10px; width: 100%;">
+            <button onclick="window.crearNuevoArchivoCode()" style="flex-grow: 1; font-size: 10px; padding: 4px; background: #161f2c; border: 1px solid #7000ff; color: #00d4ff; font-weight: bold; cursor: pointer;">+ Archivo</button>
+            <button onclick="window.crearNuevaCarpetaCode()" style="flex-grow: 1; font-size: 10px; padding: 4px; background: #161f2c; border: 1px solid #a855f7; color: #a855f7; font-weight: bold; cursor: pointer;">+ Carpeta</button>
+        </div>
+
         <div class="list-tree" id="listaArchivosCode">
             <div style="color:#888; font-size:11px; text-align:center; padding-top:20px;">Sin carpeta</div>
         </div>
     </div>
+    
     <div class="main-content-area">
         <div id="editor-monaco"></div>
         
         <div class="bottom-panel-terminal">
             <div class="terminal-header">
                 <span>CONSOLA DE SALIDA</span>
-                <button id="btnRunCode" onclick="ejecutarCodigoActual()" style="background:#7000ff; color:#fff; padding:2px 12px; font-size:11px; border-radius:3px; border-color:#00d4ff;">▶ RUN CODE</button>
+                <button id="btnRunCode" onclick="window.ejecutarCodigoActual()" style="background:#7000ff; color:#fff; padding:2px 12px; font-size:11px; border-radius:3px; border-color:#00d4ff; cursor: pointer;">▶ RUN CODE</button>
             </div>
             <div class="terminal-output" id="outputTerminal">Selecciona un archivo para empezar.</div>
             <div class="terminal-input-row">
                 <span class="terminal-prompt">&gt;</span>
-                <input type="text" class="terminal-input" id="inputTerminal" placeholder="Comandos rápidos..." onkeydown="procesarComando(event)">
+                <input type="text" class="terminal-input" id="inputTerminal" placeholder="Comandos rápidos..." onkeydown="window.procesarComando(event)">
             </div>
         </div>
     </div>
