@@ -38,7 +38,7 @@
         .fila-botones { display: flex; gap: 5px; justify-content: space-between; }
         .fila-volumen { display: flex; align-items: center; gap: 10px; background: #1a2433; padding: 5px; }
         .fila-volumen input { flex-grow: 1; accent-color: #00d4ff; }
-        button { background: #3a4b66; color: #00d4ff; border: 1px solid #7000ff; padding: 6px 10px; cursor: pointer; font-family: monospace; font-weight: bold; border-radius: 3px; }
+        .button, button { background: #3a4b66; color: #00d4ff; border: 1px solid #7000ff; padding: 6px 10px; cursor: pointer; font-family: monospace; font-weight: bold; border-radius: 3px; }
         button:hover, button.activo { background: #00d4ff; color: #121824; border-color: #00d4ff; }
         input[type="file"] { display: none; }
         .playlist-box { background: #1a2433; border: 1px solid #3d4f6e; max-height: 120px; overflow-y: auto; margin-top: 10px; padding: 5px; font-size: 11px; }
@@ -93,14 +93,20 @@
         const { ipcRenderer } = require('electron');
         const { exec } = require('child_process');
 
-        // Inyección modular de componentes HTML desde la carpeta 'tabs'
+        // Inyección modular blindada de componentes HTML desde la carpeta 'tabs'
         const cargarMódulo = (id) => {
-            const rutaTab = path.join(__dirname, 'tabs', `${id}.html`);
-            if (fs.existsSync(rutaTab)) {
-                document.getElementById(`vista-${id}`).innerHTML = fs.readFileSync(rutaTab, 'utf-8');
+            try {
+                const rutaTab = path.join(__dirname, 'tabs', `${id}.html`);
+                const contenedor = document.getElementById(`vista-${id}`);
+                if (fs.existsSync(rutaTab) && contenedor) {
+                    contenedor.innerHTML = fs.readFileSync(rutaTab, 'utf-8');
+                }
+            } catch (err) {
+                console.error(`Error crítico cargando pestaña [${id}]:`, err);
             }
         };
         
+        // Cargamos las vistas de forma segura
         ['audio', 'video', 'editor', 'browser', 'obsidian'].forEach(cargarMódulo);
 
         // 2. PARCHE MAESTRO ANTICONFLICTO: 
@@ -129,17 +135,26 @@
         let rutaVaultActual = '';
         let archivoNotaAbierto = '';
 
+        // --- LISTAS E INTELIGENCIA DE ALMACENAMIENTO PARA FAVORITOS E HISTORIAL ---
+        let listaFavs = JSON.parse(localStorage.getItem('br_favoritos')) || [];
+        let listaHist = JSON.parse(localStorage.getItem('br_historial')) || [];
+
         // 4. CONFIGURAMOS MONACO USANDO EL CARGADOR DE LA WEB ASILADO
         window.webRequire.config({ 
             paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }
         });
 
         window.onload = () => {
-            const ultimaUrl = localStorage.getItem('browser_ultima_url');
-            if (ultimaUrl && document.getElementById('browser-url')) {
-                document.getElementById('browser-url').value = ultimaUrl;
-                document.getElementById('web-view').src = ultimaUrl;
+            // CORRECCIÓN PROTEGIDA DE CONTROL DE INTERFAZ MULTI-PESTANA
+            const ultimaUrl = localStorage.getItem('browser_ultima_url') || 'https://google.com';
+            const inputUrl = document.getElementById('browser-url');
+            
+            if (inputUrl) {
+                inputUrl.value = ultimaUrl;
             }
+
+            // Inicializamos de forma segura el motor de pestañas virtuales
+            crearNuevaPestanaWeb(ultimaUrl);
 
             const ultimaCarpetaCode = localStorage.getItem('code_ultima_carpeta');
             if (ultimaCarpetaCode && window.nodeRequire('fs').existsSync(ultimaCarpetaCode)) {
@@ -156,20 +171,11 @@
             const ultimaTab = localStorage.getItem('app_ultima_tab') || 'audio';
             const botonTab = document.getElementById(`btn-tab-${ultimaTab}`);
             if (botonTab) cambiarVista(ultimaTab, botonTab);
-
-            const wv = document.getElementById('web-view');
-            if (wv) {
-                wv.addEventListener('did-navigate', (e) => {
-                    if(document.getElementById('browser-url')) document.getElementById('browser-url').value = e.url;
-                    localStorage.setItem('browser_ultima_url', e.url);
-                });
-            }
         };
 
         function inicializarEditor() {
             if (editorInstancia) return;
 
-            // Usamos la referencia web aislada para renderizar el editor visual de forma segura
             window.webRequire(['vs/editor/editor.main'], function() {
                 editorInstancia = monaco.editor.create(document.getElementById('editor-monaco'), {
                     value: '// Escribe o selecciona un archivo aquí...\n// ¡Monaco funcionando con soporte de carpetas nativas!',
@@ -198,7 +204,8 @@
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
 
-            document.getElementById(`vista-${vistaId}`).classList.add('active');
+            const seccionDestino = document.getElementById(`vista-${vistaId}`);
+            if (seccionDestino) seccionDestino.classList.add('active');
             if (botonCliquado) botonCliquado.classList.add('active');
 
             localStorage.setItem('app_ultima_tab', vistaId);
@@ -320,21 +327,18 @@
         }
 
         function navegarUrl(e) { if (e.key === 'Enter') irAUrl(); }
-        function irAUrl() {
-            let url = document.getElementById('browser-url').value.trim();
-            if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
-            document.getElementById('web-view').src = url;
-        }
 
         function abrirNotaObsidian(ruta) {
             try {
-                document.getElementById('editorObsidian').value = window.nodeRequire('fs').readFileSync(ruta, 'utf-8');
+                const txtArea = document.getElementById('editorObsidian');
+                if (txtArea) txtArea.value = window.nodeRequire('fs').readFileSync(ruta, 'utf-8');
                 archivoNotaAbierto = ruta;
                 localStorage.setItem('obsidian_ultima_nota', ruta);
             } catch (err) {}
         }
         function guardarNotaObsidian() {
-            if (archivoNotaAbierto) window.nodeRequire('fs').writeFileSync(archivoNotaAbierto, document.getElementById('editorObsidian').value, 'utf-8');
+            const txtArea = document.getElementById('editorObsidian');
+            if (archivoNotaAbierto && txtArea) window.nodeRequire('fs').writeFileSync(archivoNotaAbierto, txtArea.value, 'utf-8');
         }
         function crearNuevaNota() {
             if (!rutaVaultActual) return;
@@ -351,12 +355,27 @@
             out.innerHTML += `<div style="color: ${err ? '#ff5555' : '#00d4ff'}; margin-top:5px; border-left: 3px solid ${err ? '#ff3333' : '#7000ff'}; padding-left: 5px;">${t}</div>`;
             out.scrollTop = out.scrollHeight;
         }
+        
         function procesarComando(e) {
             if (e.key === 'Enter') {
-                const el = document.getElementById('inputTerminal'); const cmd = el.value.trim(); if (!cmd) return;
-                printTerminal(`&gt; ${cmd}`); el.value = '';
-                if (cmd === 'clear' || cmd === 'cls') { document.getElementById('outputTerminal').innerHTML = ''; return; }
-                try { printTerminal(eval(cmd)); } catch (err) { printTerminal(`Error: ${err.message}`, true); }
+                const el = document.getElementById('inputTerminal'); 
+                if (!el) return;
+                const cmd = el.value.trim(); 
+                if (!cmd) return;
+                printTerminal(`> ${cmd}`); 
+                el.value = '';
+                
+                if (cmd === 'clear' || cmd === 'cls') { 
+                    const out = document.getElementById('outputTerminal');
+                    if(out) out.innerHTML = ''; 
+                    return; 
+                }
+                try { 
+                    const resEval = eval(cmd);
+                    printTerminal(resEval !== undefined ? resEval : 'ejecutado.'); 
+                } catch (err) { 
+                    printTerminal(`Error en comando: ${err.message}`, true); 
+                }
             }
         }
 
@@ -387,11 +406,295 @@
         function detener() { medio.pause(); medio.currentTime = 0; }
         function siguienteTrack() { if (indiceActual + 1 < playlist.length) cargarTrack(indiceActual + 1); else if (playlist.length > 0) cargarTrack(0); }
         function anteriorTrack() { if (indiceActual - 1 >= 0) cargarTrack(indiceActual - 1); else if (playlist.length > 0) cargarTrack(playlist.length - 1); }
-        function cambiarVolumen(v) { medio.volume = v; if(document.getElementById('txtVolumen')) document.getElementById('txtVolumen').innerText = `${Math.round(v * 100)}%`; if(document.getElementById('btnMute')) document.getElementById('btnMute').innerText = v > 0 ? "🔊" : "🔇"; }
-        function alternarMute() { if (!esMute) { volumenPrevio = medio.volume; cambiarVolumen(0); if(document.getElementById('controlVolumen')) document.getElementById('controlVolumen').value = 0; esMute = true; } else { cambiarVolumen(volumenPrevio); if(document.getElementById('controlVolumen')) document.getElementById('controlVolumen').value = volumenPrevio; esMute = false; } }
-        function alternarLoop() { medio.loop = !medio.loop; const bl = document.getElementById('btnLoop'); if(bl){ bl.innerText = medio.loop ? "🔁 LOOP (ON)" : "🔁 LOOP (OFF)"; bl.classList.toggle('activo', medio.loop); } }
-        function limpiarPlaylist() { detener(); medio.src = ""; playlist = []; indiceActual = 0; if(document.getElementById('nombreAudio')) document.getElementById('nombreAudio').innerText = "TRACK: (Ninguno cargado)"; actualizarInterfaces(); }
+        
+        function cambiarVolumen(v) { 
+            medio.volume = v; 
+            const txtVol = document.getElementById('txtVolumen');
+            const bMute = document.getElementById('btnMute');
+            if(txtVol) txtVol.innerText = `${Math.round(v * 100)}%`; 
+            if(bMute) bMute.innerText = v > 0 ? "🔊" : "🔇"; 
+        }
+        function alternarMute() { 
+            const ctrlVol = document.getElementById('controlVolumen');
+            if (!esMute) { 
+                volumenPrevio = medio.volume; 
+                cambiarVolumen(0); 
+                if(ctrlVol) ctrlVol.value = 0; 
+                esMute = true; 
+            } else { 
+                cambiarVolumen(volumenPrevio); 
+                if(ctrlVol) ctrlVol.value = volumenPrevio; 
+                esMute = false; 
+            } 
+        }
+        function alternarLoop() { 
+            medio.loop = !medio.loop; 
+            const bl = document.getElementById('btnLoop'); 
+            if(bl){ 
+                bl.innerText = medio.loop ? "🔁 LOOP (ON)" : "🔁 LOOP (OFF)"; 
+                bl.classList.toggle('activo', medio.loop); 
+            } 
+        }
+        function limpiarPlaylist() { 
+            detener(); 
+            medio.src = ""; 
+            playlist = []; 
+            indiceActual = 0; 
+            const nAudio = document.getElementById('nombreAudio');
+            if(nAudio) nAudio.innerText = "TRACK: (Ninguno cargado)"; 
+            actualizarInterfaces(); 
+        }
         medio.addEventListener('ended', () => { if (!medio.loop) siguienteTrack(); });
+
+
+        // =========================================================================
+        // 🔥 SOPORTE EXCLUSIVO PARA EL PANEL DE CONTROL DEL NAVEGADOR AVANZADO 🔥
+        // =========================================================================
+        
+        function alternarPanelLateral() {
+            const sidebar = document.getElementById('browser-sidebar');
+            if (!sidebar) return;
+            if (sidebar.style.display === 'none' || sidebar.style.display === '') {
+                sidebar.style.display = 'flex';
+                renderizarFavoritosYHistorial();
+            } else {
+                sidebar.style.display = 'none';
+            }
+        }
+
+        function alternarFavoritoActual() {
+            if (!idPestanaActiva) return;
+            const wv = document.getElementById(`wv-${idPestanaActiva}`);
+            if (!wv) return;
+            const urlActual = wv.getURL ? wv.getURL() : wv.src;
+            if (!urlActual) return;
+            
+            if (listaFavs.includes(urlActual)) {
+                listaFavs = listaFavs.filter(u => u !== urlActual);
+            } else {
+                listaFavs.push(urlActual);
+            }
+            localStorage.setItem('br_favoritos', JSON.stringify(listaFavs));
+            verificarIconoFavorito(urlActual);
+            renderizarFavoritosYHistorial();
+        }
+
+        function registrarUrlEnHistorial(url) {
+            if (!url || url === 'about:blank') return;
+            if (listaHist.length === 0 || listaHist[0] !== url) {
+                listaHist.unshift(url);
+                if (listaHist.length > 25) listaHist.pop(); 
+                localStorage.setItem('br_historial', JSON.stringify(listaHist));
+            }
+            verificarIconoFavorito(url);
+            if (document.getElementById('browser-sidebar')?.style.display === 'flex') {
+                renderizarFavoritosYHistorial();
+            }
+        }
+
+        function verificarIconoFavorito(url) {
+            const btn = document.getElementById('btn-fav-actual');
+            if (!btn) return;
+            btn.innerText = listaFavs.includes(url) ? '★' : '⭐';
+            btn.style.color = listaFavs.includes(url) ? '#eab308' : '#00d4ff';
+        }
+
+        function renderizarFavoritosYHistorial() {
+            const fDiv = document.getElementById('lista-favoritos');
+            const hDiv = document.getElementById('lista-historial');
+            if(!fDiv || !hDiv) return;
+
+            fDiv.innerHTML = listaFavs.length ? '' : '<span style="color:#555;font-size:10px;padding:4px;">Vacío</span>';
+            listaFavs.forEach(url => {
+                const item = document.createElement('div');
+                item.style = "padding: 5px 4px; color: #cbd5e0; cursor: pointer; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; font-size:11px; border-bottom:1px solid #1e293b;";
+                item.innerText = url.replace('https://','').replace('http://','').replace('www.','');
+                item.title = url;
+                item.onclick = () => { 
+                    const inputUrl = document.getElementById('browser-url');
+                    if (inputUrl) inputUrl.value = url;
+                    irAUrl();
+                };
+                fDiv.appendChild(item);
+            });
+
+            hDiv.innerHTML = listaHist.length ? '' : '<span style="color:#555;font-size:10px;padding:4px;">Vacío</span>';
+            listaHist.forEach(url => {
+                const item = document.createElement('div');
+                item.style = "padding: 5px 4px; color: #a0aec0; cursor: pointer; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; font-size:11px; border-bottom:1px solid #1e293b;";
+                item.innerText = url.replace('https://','').replace('http://','').replace('www.','');
+                item.title = url;
+                item.onclick = () => { 
+                    const inputUrl = document.getElementById('browser-url');
+                    if (inputUrl) inputUrl.value = url;
+                    irAUrl();
+                };
+                hDiv.appendChild(item);
+            });
+        }
+
+        function limpiarHistorialCompleto() {
+            listaHist = [];
+            localStorage.setItem('br_historial', JSON.stringify(listaHist));
+            renderizarFavoritosYHistorial();
+        }
+
+        // =========================================================================
+        // 🔥 SISTEMA DE GESTIÓN DE MULTI-PESTAÑAS VIRTUALES 🔥
+        // =========================================================================
+        let navegadorPestanas = []; 
+        let idPestanaActiva = null;
+
+        function crearNuevaPestanaWeb(urlInicial = 'https://google.com') {
+            const idUnico = 'tab-' + Date.now();
+            
+            const nuevaPestana = {
+                id: idUnico,
+                url: urlInicial
+            };
+            navegadorPestanas.push(nuevaPestana);
+
+            const contenedorWebviews = document.getElementById('browser-webviews-container');
+            if (contenedorWebviews) {
+                const nuevoWebview = document.createElement('webview');
+                nuevoWebview.id = `wv-${idUnico}`;
+                nuevoWebview.src = urlInicial;
+                nuevoWebview.setAttribute('allowpopups', '');
+                nuevoWebview.style.width = '100%';
+                nuevoWebview.style.height = '100%';
+                nuevoWebview.style.display = 'none'; 
+                
+                nuevoWebview.addEventListener('did-navigate', (e) => {
+                    nuevaPestana.url = e.url;
+                    if (idPestanaActiva === idUnico) {
+                        const inputUrl = document.getElementById('browser-url');
+                        if (inputUrl) inputUrl.value = e.url;
+                        localStorage.setItem('browser_ultima_url', e.url);
+                    }
+                });
+
+                contenedorWebviews.appendChild(nuevoWebview);
+            }
+
+            activarPestanaWeb(idUnico);
+        }
+
+        function activarPestanaWeb(idTab) {
+            idPestanaActiva = idTab;
+
+            navegadorPestanas.forEach(t => {
+                const wv = document.getElementById(`wv-${t.id}`);
+                if (wv) wv.style.display = (t.id === idTab) ? 'flex' : 'none';
+            });
+
+            const tabData = navegadorPestanas.find(t => t.id === idTab);
+            const inputUrl = document.getElementById('browser-url');
+            if (tabData && inputUrl) {
+                inputUrl.value = tabData.url;
+                verificarIconoFavorito(tabData.url);
+            }
+
+            renderizarBarraPestanas();
+        }
+
+        function cerrarPestanaWeb(idTab, event) {
+            if (event) event.stopPropagation(); 
+
+            const wv = document.getElementById(`wv-${idTab}`);
+            if (wv) wv.remove();
+
+            const indice = navegadorPestanas.findIndex(t => t.id === idTab);
+            navegadorPestanas = navegadorPestanas.filter(t => t.id !== idTab);
+
+            if (idPestanaActiva === idTab) {
+                if (navegadorPestanas.length > 0) {
+                    const nuevoIndice = Math.max(0, indice - 1);
+                    activarPestanaWeb(navegadorPestanas[nuevoIndice].id);
+                } else {
+                    idPestanaActiva = null;
+                    const inputUrl = document.getElementById('browser-url');
+                    if (inputUrl) inputUrl.value = '';
+                    renderizarBarraPestanas();
+                }
+            } else {
+                renderizarBarraPestanas();
+            }
+        }
+
+        function renderizarBarraPestanas() {
+            const barra = document.getElementById('browser-tabs-bar');
+            if (!barra) return;
+
+            const botonNueva = barra.querySelector('button[onclick*="crearNuevaPestanaWeb"]');
+            barra.innerHTML = '';
+
+            navegadorPestanas.forEach(t => {
+                const btnTab = document.createElement('div');
+                const esActiva = (t.id === idPestanaActiva);
+                
+                btnTab.style.display = 'flex';
+                btnTab.style.alignItems = 'center';
+                btnTab.style.gap = '8px';
+                btnTab.style.padding = '3px 8px';
+                btnTab.style.fontSize = '11px';
+                btnTab.style.cursor = 'pointer';
+                btnTab.style.borderRadius = '3px 3px 0 0';
+                btnTab.style.fontFamily = 'monospace';
+                btnTab.style.transition = 'all 0.15s ease';
+                btnTab.style.marginBottom = '0px';
+                
+                if (esActiva) {
+                    btnTab.style.background = '#243146';
+                    btnTab.style.color = '#00d4ff';
+                    btnTab.style.borderTop = '1px solid #00d4ff';
+                    btnTab.style.borderLeft = '1px solid #3d4f6e';
+                    btnTab.style.borderRight = '1px solid #3d4f6e';
+                } else {
+                    btnTab.style.background = '#1e293b';
+                    btnTab.style.color = '#70a0e0';
+                    btnTab.style.border = '1px solid transparent';
+                }
+
+                let tituloLimpio = t.url.replace('https://','').replace('http://','').replace('www.','');
+                if (tituloLimpio.length > 18) tituloLimpio = tituloLimpio.substring(0, 15) + '...';
+                if (t.url === 'https://google.com') tituloLimpio = 'Google';
+
+                btnTab.innerHTML = `
+                    <span onclick="activarPestanaWeb('${t.id}')">${tituloLimpio}</span>
+                    <span onclick="cerrarPestanaWeb('${t.id}', event)" style="color: #ff5555; font-weight: bold; font-size: 12px; padding: 0 2px; border-radius: 2px; transition: background 0.2s;">×</span>
+                `;
+
+                const botonCerrar = btnTab.querySelector('span:last-child');
+                botonCerrar.onmouseover = () => { botonCerrar.style.background = '#ff555533'; };
+                botonCerrar.onmouseout = () => { botonCerrar.style.background = 'transparent'; };
+
+                barra.appendChild(btnTab);
+            });
+
+            if (botonNueva) barra.appendChild(botonNueva);
+        }
+
+        function navegacionPestana(accion) {
+            if (!idPestanaActiva) return;
+            const wv = document.getElementById(`wv-${idPestanaActiva}`);
+            if (!wv) return;
+            
+            if (accion === 'back' && wv.canGoBack()) wv.goBack();
+            if (accion === 'forward' && wv.canGoForward()) wv.goForward();
+            if (accion === 'reload') wv.reload();
+        }
+
+        function irAUrl() {
+            const inputUrl = document.getElementById('browser-url');
+            if (!inputUrl || !idPestanaActiva) return;
+            
+            const wv = document.getElementById(`wv-${idPestanaActiva}`);
+            if (!wv) return;
+
+            let url = inputUrl.value.trim();
+            if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
+            wv.src = url;
+        }
     </script>
 </body>
 </html>
