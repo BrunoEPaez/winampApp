@@ -1,0 +1,20 @@
+<div class="winamp-box" style="width: 500px;"> 
+    <div id="contenedorVideoReal"></div>
+    <div class="info-tema" id="nombreVideo">VIDEO: (Ninguno cargado)</div>
+    <div class="controles">
+        <div class="fila-botones">
+            <button onclick="document.getElementById('inputVideo').click()">📂 CARGAR VIDEO</button>
+            <input type="file" id="inputVideo" accept="video/*" multiple onchange="agregarAplaylist(this, 'video')">
+        </div>
+        <div class="fila-botones">
+            <button onclick="anteriorTrack()">⏮</button>
+            <button onclick="reproducir()">▶ PLAY</button>
+            <button onclick="pausar()">⏸ PAUSE</button>
+            <button onclick="detener()">⏹ STOP</button>
+            <button onclick="siguienteTrack()">⏭</button>
+        </div>
+    </div>
+    <div class="playlist-box" id="playlistVideo">
+        <div style="color: #888; text-align: center; padding-top: 40px;">Playlist vacía</div>
+    </div>
+</div>

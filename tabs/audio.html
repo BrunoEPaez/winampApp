@@ -1,0 +1,28 @@
+<div class="winamp-box">
+    <div class="info-tema" id="nombreAudio">TRACK: (Ninguno cargado)</div>
+    <div class="controles">
+        <div class="fila-botones">
+            <button onclick="document.getElementById('inputAudio').click()">📂 AÑADIR AUDIO</button>
+            <input type="file" id="inputAudio" accept="audio/*" multiple onchange="agregarAplaylist(this, 'audio')">
+            <button onclick="limpiarPlaylist()" style="color: #ff5555; border-color: #ff3333;">❌ LIMPIAR</button>
+        </div>
+        <div class="fila-botones">
+            <button onclick="anteriorTrack()">⏮ PREV</button>
+            <button onclick="reproducir()">▶ PLAY</button>
+            <button onclick="pausar()">⏸ PAUSE</button>
+            <button onclick="detener()">⏹ STOP</button>
+            <button onclick="siguienteTrack()">⏭ NEXT</button>
+        </div>
+        <div class="fila-botones">
+            <button id="btnLoop" onclick="alternarLoop()">🔁 LOOP (OFF)</button>
+        </div>
+        <div class="fila-volumen">
+            <button onclick="alternarMute()" id="btnMute">🔊</button>
+            <input type="range" id="controlVolumen" min="0" max="1" step="0.05" value="1" oninput="cambiarVolumen(this.value)">
+            <span id="txtVolumen">100%</span>
+        </div>
+    </div>
+    <div class="playlist-box" id="playlistAudio">
+        <div style="color: #888; text-align: center; padding-top: 40px;">Playlist vacía</div>
+    </div>
+</div>

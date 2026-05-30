@@ -1,0 +1,10 @@
+<div class="browser-container">
+    <div class="browser-bar">
+        <button onclick="document.getElementById('web-view').goBack()">◀</button>
+        <button onclick="document.getElementById('web-view').goForward()">▶</button>
+        <button onclick="document.getElementById('web-view').reload()">🔄</button>
+        <input type="text" class="browser-input" id="browser-url" value="https://google.com" onkeydown="navegarUrl(event)">
+        <button onclick="irAUrl()">IR</button>
+    </div>
+    <webview id="web-view" src="https://google.com" allowpopups></webview>
+</div>

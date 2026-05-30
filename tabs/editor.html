@@ -1,0 +1,24 @@
+<div class="workspace-layout">
+    <div class="sidebar">
+        <div class="sidebar-title">Proyectos</div>
+        <button onclick="abrirSelectorCarpeta('code')" style="font-size:10px; margin-bottom:10px; width:100%;">📁 CARPETA</button>
+        <div class="list-tree" id="listaArchivosCode">
+            <div style="color:#888; font-size:11px; text-align:center; padding-top:20px;">Sin carpeta</div>
+        </div>
+    </div>
+    <div class="main-content-area">
+        <div id="editor-monaco"></div>
+        
+        <div class="bottom-panel-terminal">
+            <div class="terminal-header">
+                <span>CONSOLA DE SALIDA</span>
+                <button id="btnRunCode" onclick="ejecutarCodigoActual()" style="background:#7000ff; color:#fff; padding:2px 12px; font-size:11px; border-radius:3px; border-color:#00d4ff;">▶ RUN CODE</button>
+            </div>
+            <div class="terminal-output" id="outputTerminal">Selecciona un archivo para empezar.</div>
+            <div class="terminal-input-row">
+                <span class="terminal-prompt">&gt;</span>
+                <input type="text" class="terminal-input" id="inputTerminal" placeholder="Comandos rápidos..." onkeydown="procesarComando(event)">
+            </div>
+        </div>
+    </div>
+</div>

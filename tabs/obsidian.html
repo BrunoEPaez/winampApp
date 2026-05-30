@@ -1,0 +1,13 @@
+<div class="workspace-layout">
+    <div class="sidebar">
+        <div class="sidebar-title">Notas (.MD)</div>
+        <button onclick="abrirSelectorCarpeta('notes')" style="font-size:10px; margin-bottom:10px; width:100%;">🗄️ VAULT</button>
+        <button onclick="crearNuevaNota()" style="font-size:10px; margin-bottom:10px; width:100%; color:#00d4ff;">➕ NUEVA</button>
+        <div class="list-tree" id="listaNotasMD">
+            <div style="color:#888; font-size:11px; text-align:center; padding-top:20px;">Sin Vault</div>
+        </div>
+    </div>
+    <div class="main-content-area">
+        <textarea class="obsidian-textarea" id="editorObsidian" placeholder="# Tus apuntes..." oninput="guardarNotaObsidian()"></textarea>
+    </div>
+</div>

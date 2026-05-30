@@ -1,0 +1,17 @@
+{
+  "name": "winmapapp",
+  "version": "1.0.0",
+  "description": "Reproductor multimedia y Editor de código",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Emmanuel",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "electron": "^42.3.0"
+  }
+}
