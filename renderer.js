@@ -1,7 +1,7 @@
 // =========================================================================
 // 1. CAPTURAMOS LAS REFERENCIAS NATIVAS DE NODE DE ENTRADA
 // =========================================================================
-window.nodeRequire = require;
+window.nodeRequire = require; // Escondemos el require nativo acá para protegerlo
 const fs = require('fs');
 const path = require('path');
 const { ipcRenderer } = require('electron');
@@ -14,14 +14,17 @@ const cargarMódulo = (id) => {
         const contenedor = document.getElementById(`vista-${id}`);
         if (fs.existsSync(rutaTab) && contenedor) {
             contenedor.innerHTML = fs.readFileSync(rutaTab, 'utf-8');
+            console.log(`✨ Módulo [${id}] inyectado correctamente.`);
+        } else {
+            console.warn(`⚠️ No se pudo inyectar el módulo: ${id}. Comprobar archivo o contenedor.`);
         }
     } catch (err) {
         console.error(`Error crítico cargando pestaña [${id}]:`, err);
     }
 };
 
-// Cargamos las vistas de forma segura
-['audio', 'video', 'editor', 'browser', 'obsidian'].forEach(cargarMódulo);
+// Cargamos todas las vistas de forma segura, incluyendo el nuevo asistente BMO
+['audio', 'video', 'editor', 'browser', 'obsidian', 'bmo'].forEach(cargarMódulo);
 
 // PARCHE MAESTRO ANTICONFLICTO: Ocultamos RequireJS temporalmente para Monaco
 window.require = undefined;
@@ -41,8 +44,6 @@ let archivoNotaAbierto = '';
 // Listas para almacenamiento del navegador
 let listaFavs = JSON.parse(localStorage.getItem('br_favoritos')) || [];
 let listaHist = JSON.parse(localStorage.getItem('br_historial')) || [];
-
-// Sistema de gestión de pestañas del navegador
 let navegadorPestanas = []; 
 let idPestanaActiva = null;
 
@@ -55,29 +56,29 @@ window.onload = () => {
     const inputUrl = document.getElementById('browser-url');
     if (inputUrl) inputUrl.value = ultimaUrl;
 
-    // Inicializamos de forma segura las pestañas web
+    // Inicializamos pestañas web
     crearNuevaPestanaWeb(ultimaUrl);
 
-    // Auto-vincular carpetas previas del desarrollador
+    // Auto-vincular carpetas previas si existen físicamente en el disco
     const ultimaCarpetaCode = localStorage.getItem('code_ultima_carpeta');
-    if (ultimaCarpetaCode && window.nodeRequire('fs').existsSync(ultimaCarpetaCode)) {
+    if (ultimaCarpetaCode && fs.existsSync(ultimaCarpetaCode)) {
         rutaProyectoActual = ultimaCarpetaCode;
         renderListaFisica(rutaProyectoActual, 'listaArchivosCode', false);
     }
 
     const ultimoVault = localStorage.getItem('obsidian_ultimo_vault');
-    if (ultimoVault && window.nodeRequire('fs').existsSync(ultimoVault)) {
+    if (ultimoVault && fs.existsSync(ultimoVault)) {
         rutaVaultActual = ultimoVault;
         renderListaFisica(rutaVaultActual, 'listaNotasMD', true);
     }
 
-    // Cambiar a la última sección abierta
+    // Cambiar a la última sección abierta de forma fluida
     const ultimaTab = localStorage.getItem('app_ultima_tab') || 'audio';
     const botonTab = document.getElementById(`btn-tab-${ultimaTab}`);
     if (botonTab) cambiarVista(ultimaTab, botonTab);
 };
 
-// Configuración diferida de Monaco Editor
+// Configuración diferida de Monaco Editor para que cargue vía CDN sin trabar el hilo
 window.webRequire.config({ 
     paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' }
 });
@@ -87,7 +88,7 @@ function inicializarEditor() {
 
     window.webRequire(['vs/editor/editor.main'], function() {
         editorInstancia = monaco.editor.create(document.getElementById('editor-monaco'), {
-            value: '// Escribe o selecciona un archivo aquí...\n// ¡Monaco funcionando con soporte de carpetas nativas!',
+            value: '// Bienvenido a tu entorno de desarrollo nativo liviano\n// Selecciona un archivo de tu panel lateral para programar.',
             language: 'javascript',
             theme: 'vs-dark',
             automaticLayout: true,
@@ -98,23 +99,29 @@ function inicializarEditor() {
 
         editorInstancia.onDidChangeModelContent(() => {
             if (archivoCodigoAbierto && editorInstancia) {
-                window.nodeRequire('fs').writeFileSync(archivoCodigoAbierto, editorInstancia.getValue(), 'utf-8');
+                fs.writeFileSync(archivoCodigoAbierto, editorInstancia.getValue(), 'utf-8');
             }
         });
 
         const ultimoArchivo = localStorage.getItem('code_ultimo_archivo');
-        if (ultimoArchivo && window.nodeRequire('fs').existsSync(ultimoArchivo)) {
+        if (ultimoArchivo && fs.existsSync(ultimoArchivo)) {
             abrirCodigoEnEditor(ultimoArchivo);
         }
     });
 }
 
 function cambiarVista(vistaId, botonCliquado) {
-    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.view-section').forEach(s => {
+        s.classList.remove('active');
+        s.style.display = 'none';
+    });
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
 
     const seccionDestino = document.getElementById(`vista-${vistaId}`);
-    if (seccionDestino) seccionDestino.classList.add('active');
+    if (seccionDestino) {
+        seccionDestino.classList.add('active');
+        seccionDestino.style.display = 'flex'; // Cambiado a flex para respetar layouts modernos de los módulos
+    }
     if (botonCliquado) botonCliquado.classList.add('active');
 
     localStorage.setItem('app_ultima_tab', vistaId);
@@ -143,7 +150,7 @@ async function abrirSelectorCarpeta(tipo) {
         rutaProyectoActual = ruta;
         localStorage.setItem('code_ultima_carpeta', ruta);
         renderListaFisica(rutaProyectoActual, 'listaArchivosCode', false);
-        printTerminal(`Carpeta vinculada: ${ruta}`);
+        printTerminal(`Carpeta del proyecto vinculada con éxito: ${ruta}`);
     } else if (tipo === 'notes') {
         rutaVaultActual = ruta;
         localStorage.setItem('obsidian_ultimo_vault', ruta);
@@ -152,47 +159,40 @@ async function abrirSelectorCarpeta(tipo) {
 }
 
 // =========================================================================
-// 3. NUEVO EXPLORADOR RECURSIVO INTEGRAL (Soporta carpetas y subcarpetas)
+// 3. EXPLORADOR RECURSIVO BLINDADO (Anti-cuelgues SWAP / Archivos Ocultos)
 // =========================================================================
 function renderListaFisica(rutaRaiz, contenedorId, soloMarkdown) {
     const divContenedor = document.getElementById(contenedorId);
     if (!divContenedor) return;
     divContenedor.innerHTML = '';
 
-    const nativeFs = window.nodeRequire('fs');
-    const nativePath = window.nodeRequire('path');
-
     function generarArbol(rutaActual, nodoDestino, nivel = 0) {
         try {
-            if (!nativeFs.existsSync(rutaActual)) return;
-            const elementos = nativeFs.readdirSync(rutaActual);
+            if (!fs.existsSync(rutaActual)) return;
+            const elementos = fs.readdirSync(rutaActual);
             
             const carpetas = [];
             const archivos = [];
 
             elementos.forEach(el => {
-                const rutaCompleta = nativePath.join(rutaActual, el);
-                const stat = nativeFs.statSync(rutaCompleta);
-                if (stat.isDirectory()) carpetas.push({ el, rutaCompleta });
-                else archivos.push({ el, rutaCompleta });
+                try {
+                    const rutaCompleta = path.join(rutaActual, el);
+                    const stat = fs.statSync(rutaCompleta);
+                    if (stat.isDirectory()) carpetas.push({ el, rutaCompleta });
+                    else archivos.push({ el, rutaCompleta });
+                } catch (e) {
+                    // Evita fugas de memoria o bloqueos si el archivo está protegido por Linux
+                }
             });
 
-            // A. Dibujar Carpetas en la barra lateral
+            // Dibujar Carpetas de manera eficiente
             carpetas.forEach(c => {
                 const divCarpeta = document.createElement('div');
-                divCarpeta.style.paddingLeft = `${nivel * 12}px`;
-                divCarpeta.style.display = 'flex';
-                divCarpeta.style.alignItems = 'center';
-                divCarpeta.style.cursor = 'pointer';
-                divCarpeta.style.fontSize = '12px';
-                divCarpeta.style.fontWeight = 'bold';
-                divCarpeta.style.color = '#a855f7';
-                divCarpeta.style.paddingTop = '3px';
-                divCarpeta.style.paddingBottom = '3px';
+                divCarpeta.style = `padding-left: ${nivel * 12}px; display: flex; align-items: center; cursor: pointer; font-size: 12px; font-weight: bold; color: #a855f7; padding-top: 3px; padding-bottom: 3px;`;
                 divCarpeta.innerText = `📁 ${c.el}`;
 
                 const subContenedor = document.createElement('div');
-                subContenedor.style.display = 'block'; // Carpetas desplegadas por defecto
+                subContenedor.style.display = 'block';
 
                 divCarpeta.onclick = (e) => {
                     e.stopPropagation();
@@ -206,16 +206,17 @@ function renderListaFisica(rutaRaiz, contenedorId, soloMarkdown) {
                 generarArbol(c.rutaCompleta, subContenedor, nivel + 1);
             });
 
-            // B. Dibujar Archivos (.md o código general)
+            // Dibujar Archivos (.md o código general)
             const cachedArchivo = localStorage.getItem(soloMarkdown ? 'obsidian_ultima_nota' : 'code_ultimo_archivo');
             
             archivos.forEach(a => {
-                const extension = nativePath.extname(a.el).toLowerCase();
-                if (soloMarkdown && extension !== '.md') return; // Si es obsidian, filtrar solo .md
+                const extension = path.extname(a.el).toLowerCase();
+                if (soloMarkdown && extension !== '.md') return;
 
                 const item = document.createElement('div');
                 item.className = 'tree-item';
                 item.style.paddingLeft = `${nivel * 12 + 6}px`;
+                item.style.cursor = 'pointer';
                 if (cachedArchivo === a.rutaCompleta) item.classList.add('activo');
                 item.innerText = soloMarkdown ? `📄 ${a.el.replace('.md','')}` : `📄 ${a.el}`;
                 
@@ -224,23 +225,19 @@ function renderListaFisica(rutaRaiz, contenedorId, soloMarkdown) {
                     document.querySelectorAll(`#${contenedorId} .tree-item`).forEach(i => i.classList.remove('activo'));
                     item.classList.add('activo');
                     
-                    if (soloMarkdown) {
-                        abrirNotaObsidian(a.rutaCompleta);
-                    } else {
-                        abrirCodigoEnEditor(a.rutaCompleta);
-                    }
+                    if (soloMarkdown) abrirNotaObsidian(a.rutaCompleta);
+                    else abrirCodigoEnEditor(a.rutaCompleta);
                 };
                 nodoDestino.appendChild(item);
             });
         } catch (err) {
-            console.error("Error construyendo árbol de directorios:", err);
+            console.error("Error construyendo árbol:", err);
         }
     }
 
     generarArbol(rutaRaiz, divContenedor, 0);
 }
 
-// Lógica de carga interna en Monaco Editor
 function abrirCodigoEnEditor(ruta) {
     try {
         if (!editorInstancia) return;
@@ -248,7 +245,6 @@ function abrirCodigoEnEditor(ruta) {
         archivoCodigoAbierto = ruta;
         localStorage.setItem('code_ultimo_archivo', ruta);
         
-        // Mapeo dinámico de lenguajes
         const ext = path.extname(ruta).toLowerCase();
         let lang = 'javascript';
         if (ext === '.py') lang = 'python';
@@ -263,30 +259,26 @@ function abrirCodigoEnEditor(ruta) {
         editorInstancia.setModel(nuevoModelo);
         if (antiguoModelo) antiguoModelo.dispose();
         
-        printTerminal(`Archivo cargado: ${path.basename(ruta)}`);
+        printTerminal(`Archivo cargado en Monaco: ${path.basename(ruta)}`);
     } catch (err) {
         printTerminal(`Error leyendo archivo: ${err.message}`, true);
     }
 }
 
-// Función para ejecutar código nativo desde el Editor (JS, Python, Rust)
 function ejecutarCodigoActual() {
     if (!archivoCodigoAbierto || !editorInstancia) return;
     
-    // Auto-guardamos antes de ejecutar
     fs.writeFileSync(archivoCodigoAbierto, editorInstancia.getValue(), 'utf-8');
     const extension = path.extname(archivoCodigoAbierto).toLowerCase();
     let comandoEjecucion = '';
 
-    if (extension === '.js') {
-        comandoEjecucion = `node "${archivoCodigoAbierto}"`;
-    } else if (extension === '.py') {
-        comandoEjecucion = `python "${archivoCodigoAbierto}"`;
-    } else if (extension === '.rs') {
+    if (extension === '.js') comandoEjecucion = `node "${archivoCodigoAbierto}"`;
+    else if (extension === '.py') comandoEjecucion = `python "${archivoCodigoAbierto}"`;
+    else if (extension === '.rs') {
         const rutaBinario = archivoCodigoAbierto.replace('.rs', '');
         comandoEjecucion = `rustc "${archivoCodigoAbierto}" && "${rutaBinario}"`;
     } else {
-        printTerminal(`La extensión ${extension} no tiene un motor de ejecución configurado.`, true);
+        printTerminal(`Extensión ${extension} no configurada para ejecución directa.`, true);
         return;
     }
 
@@ -300,10 +292,10 @@ function ejecutarCodigoActual() {
     });
 }
 
-// 📂 FUNCIONES DE CREACIÓN DE ARCHIVOS Y CARPETAS PARA EL EDITOR DE CÓDIGO (NUEVO)
+// Funciones operativas de creación
 function crearNuevoArchivoCode() {
     if (!rutaProyectoActual) { alert("Primero vinculá una carpeta de proyecto."); return; }
-    const nombreArchivo = prompt("Nombre del archivo con su extensión (ej: app.js, index.html, main.py):");
+    const nombreArchivo = prompt("Nombre del archivo con su extensión (ej: main.js, script.py, app.rs):");
     if (!nombreArchivo) return;
     const rutaFinal = path.join(rutaProyectoActual, nombreArchivo);
     try {
@@ -337,9 +329,7 @@ function abrirNotaObsidian(ruta) {
         localStorage.setItem('obsidian_ultima_nota', ruta);
         
         const rutaActiva = document.getElementById('ruta-nota-activa');
-        if (rutaActiva) {
-            rutaActiva.innerText = `ARCHIVO: ${path.basename(ruta).toUpperCase()}`;
-        }
+        if (rutaActiva) rutaActiva.innerText = `ARCHIVO: ${path.basename(ruta).toUpperCase()}`;
     } catch (err) {
         console.error("Error abriendo nota:", err);
     }
@@ -353,36 +343,46 @@ function guardarNotaObsidian() {
 }
 
 function crearNuevaNota() {
-    if (!rutaVaultActual) { alert("Primero vinculá un Vault de notas."); return; }
-    const nombreNota = prompt("Nombre de la nueva nota (sin .md):");
+    if (!rutaVaultActual) { 
+        alert("⚠️ Error: No hay ninguna ruta de Vault guardada o vinculada."); 
+        return; 
+    }
+    const nombreNota = prompt("Nombre de la nueva nota:");
     if (!nombreNota) return;
+    
     const rutaFinal = path.join(rutaVaultActual, `${nombreNota}.md`);
     try {
         fs.writeFileSync(rutaFinal, `# ${nombreNota}\n\n`, 'utf-8');
         renderListaFisica(rutaVaultActual, 'listaNotasMD', true);
         abrirNotaObsidian(rutaFinal);
     } catch (err) {
-        alert("Error creando nota: " + err.message);
+        alert(`❌ ERROR DE SISTEMA al crear nota:\nCódigo: ${err.code}\nMensaje: ${err.message}`);
     }
 }
 
 function crearNuevaCarpetaNota() {
-    if (!rutaVaultActual) { alert("Primero vinculá un Vault de notas."); return; }
+    if (!rutaVaultActual) { 
+        alert("⚠️ Error: Primero vinculá un Vault de notas."); 
+        return; 
+    }
     const nombreCarpeta = prompt("Nombre de la nueva carpeta:");
     if (!nombreCarpeta) return;
+    
     const rutaFinal = path.join(rutaVaultActual, nombreCarpeta);
     try {
         if (!fs.existsSync(rutaFinal)) {
             fs.mkdirSync(rutaFinal);
             renderListaFisica(rutaVaultActual, 'listaNotasMD', true);
+        } else {
+            alert("⚠️ La carpeta ya existe en esa ubicación.");
         }
     } catch (err) {
-        console.error("Error creando directorio en Vault:", err);
+        alert(`❌ ERROR DE SISTEMA al crear carpeta:\nCódigo: ${err.code}\nMensaje: ${err.message}`);
     }
 }
 
 // =========================================================================
-// 5. SISTEMA TERMINAL INTEGRADA
+// 5. TERMINAL INTEGRADA
 // =========================================================================
 function printTerminal(t, err = false) {
     const out = document.getElementById('outputTerminal');
@@ -498,7 +498,7 @@ function limpiarPlaylist() {
 medio.addEventListener('ended', () => { if (!medio.loop) siguienteTrack(); });
 
 // =========================================================================
-// 7. BROWSER SIDEBAR & PESTAÑAS (CORREGIDO MULTI-TAB)
+// 7. BROWSER SIDEBAR & PESTAÑAS MÚLTIPLES
 // =========================================================================
 function alternarPanelLateral() {
     const sidebar = document.getElementById('browser-sidebar');
@@ -587,11 +587,41 @@ function crearNuevaPestanaWeb(urlInicial = 'https://google.com') {
         nuevoWebview.style.height = '100%';
         nuevoWebview.style.display = 'none';
         
+        // 🔥 PARCHE DE SEGURIDAD INTEGRADO: listeners de carga blindados
+        nuevoWebview.addEventListener('did-start-loading', () => {
+            const inputUrl = document.getElementById('browser-url');
+            if (idUnico === idPestanaActiva && inputUrl) {
+                try {
+                    if (typeof nuevoWebview.getWebContentsId === 'function' && nuevoWebview.getWebContentsId()) {
+                        inputUrl.value = nuevoWebview.getURL();
+                    } else {
+                        inputUrl.value = nuevoWebview.src || '';
+                    }
+                } catch (e) {
+                    inputUrl.value = nuevoWebview.src || '';
+                }
+            }
+        });
+
+        nuevoWebview.addEventListener('did-stop-loading', () => {
+            try {
+                if (typeof nuevoWebview.getWebContentsId === 'function' && nuevoWebview.getWebContentsId()) {
+                    const urlActual = nuevoWebview.getURL();
+                    if (!listaHist.includes(urlActual) && !urlActual.startsWith('data:')) {
+                        registrarUrlEnHistorial(urlActual);
+                    }
+                }
+            } catch (e) {
+                console.warn("[Browser] Esperando montaje completo del proceso secundario.");
+            }
+        });
+        
         nuevoWebview.addEventListener('did-navigate', (e) => {
             nuevaPestana.url = e.url;
             registrarUrlEnHistorial(e.url);
             if (idPestanaActiva === idUnico) {
-                document.getElementById('browser-url').value = e.url;
+                const inputUrl = document.getElementById('browser-url');
+                if (inputUrl) inputUrl.value = e.url;
                 localStorage.setItem('browser_ultima_url', e.url);
             }
         });
@@ -629,7 +659,8 @@ function cerrarPestanaWeb(idTab, event) {
             activarPestanaWeb(navegadorPestanas[Math.max(0, indice - 1)].id);
         } else {
             idPestanaActiva = null;
-            document.getElementById('browser-url').value = '';
+            const inputUrl = document.getElementById('browser-url');
+            if (inputUrl) inputUrl.value = '';
             renderizarBarraPestanas();
         }
     } else {
@@ -659,18 +690,13 @@ function renderizarBarraPestanas() {
             <span onclick="window.activarPestanaWeb('${t.id}')">${tituloLimpio}</span>
             <span onclick="window.cerrarPestanaWeb('${t.id}', event)" style="color: #ff5555; font-weight: bold; font-size: 12px; padding: 0 2px; border-radius: 2px; transition: background 0.2s;">×</span>
         `;
-
-        const botonCerrar = btnTab.querySelector('span:last-child');
-        botonCerrar.onmouseover = () => { botonCerrar.style.background = '#ff555533'; };
-        botonCerrar.onmouseout = () => { botonCerrar.style.background = 'transparent'; };
-
         barra.appendChild(btnTab);
     });
 
     if (botonNueva) barra.appendChild(botonNueva);
 }
 
-function navegacionPestana(accion) {
+function navegadorPestana(accion) {
     if (!idPestanaActiva) return;
     const wv = document.getElementById(`wv-${idPestanaActiva}`);
     if (!wv) return;
@@ -697,8 +723,7 @@ function irAUrl() {
 function navegarUrl(e) { if (e.key === 'Enter') irAUrl(); }
 
 // =========================================================================
-// 8. EXPOSICIÓN MAESTRA AL ENTORNO GLOBAL (WINDOW)
-// Mapeamos de forma limpia las funciones para los onclick de las pestañas HTML
+// 8. EXPOSICIÓN GLOBAL EXPLICITA AL ENTORNO (WINDOW)
 // =========================================================================
 window.cambiarVista = cambiarVista;
 window.abrirSelectorCarpeta = abrirSelectorCarpeta;
@@ -728,6 +753,3 @@ window.cerrarPestanaWeb = cerrarPestanaWeb;
 window.navegacionPestana = navegacionPestana;
 window.irAUrl = irAUrl;
 window.navegarUrl = navegarUrl;
-
-// Re-mapeo para RequireJS Monaco
-window.webRequire = window.nodeRequire;

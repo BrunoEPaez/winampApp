@@ -25,6 +25,9 @@ function crearVentana() {
   
   ventanaPrincipal.loadFile(path.join(__dirname, 'index.html'));
 
+  // 🔥 AGREGÁ O DESCOMENTÁ ESTA LÍNEA AQUÍ ABAJO:
+  ventanaPrincipal.webContents.openDevTools();
+  
   // Opcional: Descomentá la siguiente línea si querés que las DevTools se abran automáticamente al compilar
   // ventanaPrincipal.webContents.openDevTools();
 }

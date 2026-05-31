@@ -79,6 +79,7 @@
         <button class="tab-btn" id="btn-tab-editor" onclick="cambiarVista('editor', this)">📝 CODE</button>
         <button class="tab-btn" id="btn-tab-browser" onclick="cambiarVista('browser', this)">🌐 BROWSER</button>
         <button class="tab-btn" id="btn-tab-obsidian" onclick="cambiarVista('obsidian', this)">📓 OBSIDIAN</button>
+        <button class="tab-btn" id="btn-tab-bmo" onclick="cambiarVista('bmo', this)" style="border-color: #a855f7; color: #a855f7;">🤖 BMO</button>
     </div>
 
     <video id="reproductorGlobal" style="display: none;"></video>
@@ -88,9 +89,9 @@
     <div id="vista-editor" class="view-section"></div>
     <div id="vista-browser" class="view-section"></div>
     <div id="vista-obsidian" class="view-section"></div>
+    <div id="vista-bmo" class="view-section"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
-
     <script src="renderer.js"></script>
 </body>
 </html>
