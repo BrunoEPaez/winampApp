@@ -24,7 +24,7 @@ const cargarMódulo = (id) => {
 };
 
 // Cargamos todas las vistas de forma segura, incluyendo el nuevo asistente BMO
-['audio', 'video', 'editor', 'browser', 'obsidian', 'bmo'].forEach(cargarMódulo);
+['audio', 'video', 'editor', 'browser', 'obsidian', 'bmo', 'type-training', 'ai-tasks'].forEach(cargarMódulo);
 
 // PARCHE MAESTRO ANTICONFLICTO: Ocultamos RequireJS temporalmente para Monaco
 window.require = undefined;

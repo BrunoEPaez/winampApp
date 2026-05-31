@@ -1,0 +1,136 @@
+<div class="workspace-layout" style="display: flex; width: 100%; height: 100%; background: #1a2433; overflow: hidden; margin-top: 0px; flex-direction: column; padding: 15px; box-sizing: border-box;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 10px; border: 1px solid #3d4f6e; border-radius: 4px; margin-bottom: 10px;">
+        <div style="font-size: 12px; font-weight: bold; color: #00d4ff;">⌨️ ENTRENADOR DE MEMORIA MECÁNICA DE CÓDIGO</div>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="cambiarLenguajeTraining('js')" class="button" id="btn-lang-js">JavaScript</button>
+            <button onclick="cambiarLenguajeTraining('py')" class="button" id="btn-lang-py">Python</button>
+            <button onclick="cambiarLenguajeTraining('rs')" class="button" id="btn-lang-rs">Rust (Low Level)</button>
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 15px; margin-bottom: 10px; background: #161f2c; padding: 10px; border: 1px solid #7000ff; border-radius: 4px;">
+        <div style="font-size: 12px; color: #cbd5e0;">CPM (Velocidad): <span id="stat-cpm" style="color: #00d4ff; font-weight: bold;">0</span></div>
+        <div style="font-size: 12px; color: #cbd5e0;">Precisión: <span id="stat-precision" style="color: #00ff66; font-weight: bold;">100%</span></div>
+        <div style="font-size: 12px; color: #cbd5e0;">Progreso: <span id="stat-progreso" style="color: #a855f7; font-weight: bold;">0/0</span></div>
+        <button onclick="reiniciarEjercicio()" style="margin-left: auto; font-size: 10px; padding: 2px 8px;">🔄 Reiniciar</button>
+    </div>
+
+    <div style="flex-grow: 1; background: #0f1520; border: 1px solid #3d4f6e; border-radius: 4px; padding: 20px; font-family: 'Courier New', Courier, monospace; font-size: 16px; position: relative; overflow-y: auto; line-height: 1.6; min-height: 150px;">
+        <div id="texto-guia-code" style="white-space: pre-wrap; color: #4a5568; pointer-events: none; word-break: break-all;"></div>
+        
+        <textarea id="input-captura-tipeo" oninput="procesarTipeoMecanico()" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; resize: none; outline: none; cursor: default;" spellcheck="false"></textarea>
+    </div>
+    
+    <div style="font-size: 11px; color: #888; margin-top: 5px; text-align: center;">Hacé clic dentro del cuadro negro superior y empezá a escribir. La aplicación resaltará en <span style="color:#00d4ff;">Celeste</span> lo correcto y en <span style="color:#ff5555;">Rojo</span> si errás el caracter.</div>
+</div>
+
+<script>
+// Base de datos local de sintaxis para fijar en memoria muscular
+const bloquesEntrenamiento = {
+    js: `function calcularModulo(id) {\n    try {\n        const ruta = path.join(__dirname, id);\n        if (fs.existsSync(ruta)) {\n            return true;\n        }\n    } catch (err) {\n        console.error(err);\n    }\n}`,
+    py: `def descargar_recurso(url, destino):\n    try:\n        print(f"[START]: {url}")\n        # Automatización de descarga offline\n        import urllib.request\n        urllib.request.urlretrieve(url, destino)\n    except Exception as e:\n        print("Error:", e)`,
+    rs: `fn main() {\n    let tu_variable: u32 = 1024;\n    let puntero_crudo: *const u32 = &tu_variable;\n    unsafe {\n        println!("Valor en memoria de bajo nivel: {}", *puntero_crudo);\n    }\n}`
+};
+
+let codigoObjetivo = "";
+let caracteresTipeadosCorrectos = 0;
+let totalErroresCometidos = 0;
+let tiempoInicioTraining = null;
+let lenguajeActualTraining = 'js';
+
+function inicializarMecanografia() {
+    codigoObjetivo = bloquesEntrenamiento[lenguajeActualTraining];
+    caracteresTipeadosCorrectos = 0;
+    totalErroresCometidos = 0;
+    tiempoInicioTraining = null;
+    
+    document.querySelectorAll('[id^="btn-lang-"]').forEach(b => b.classList.remove('activo'));
+    const btnActivo = document.getElementById(`btn-lang-${lenguajeActualTraining}`);
+    if (btnActivo) btnActivo.classList.add('activo');
+    
+    const inputOculto = document.getElementById('input-captura-tipeo');
+    if (inputOculto) inputOculto.value = "";
+    
+    actualizarPantallaGuia();
+}
+
+function cambiarLenguajeTraining(lang) {
+    lenguajeActualTraining = lang;
+    inicializarMecanografia();
+}
+
+function reiniciarEjercicio() {
+    inicializarMecanografia();
+}
+
+function actualizarPantallaGuia() {
+    const contenedor = document.getElementById('texto-guia-code');
+    if (!contenedor) return;
+    
+    let htmlResultado = "";
+    for (let i = 0; i < codigoObjetivo.length; i++) {
+        let char = codigoObjetivo[i];
+        if (char === "\n") char = "↵\n"; // Representación visual del Enter
+        
+        if (i < caracteresTipeadosCorrectos) {
+            htmlResultado += `<span style="color: #00d4ff; background: rgba(0,212,255,0.15); font-weight:bold;">${char}</span>`;
+        } else if (i === caracteresTipeadosCorrectos) {
+            htmlResultado += `<span style="color: #ffffff; background: #7000ff; font-weight:bold; animation: blink 1s infinite;">${char}</span>`;
+        } else {
+            htmlResultado += `<span style="color: #4a5568;">${char}</span>`;
+        }
+    }
+    contenedor.innerHTML = htmlResultado;
+    
+    document.getElementById('stat-progreso').innerText = `${caracteresTipeadosCorrectos}/${codigoObjetivo.length}`;
+}
+
+function procesarTipeoMecanico() {
+    const input = document.getElementById('input-captura-tipeo');
+    if (!input) return;
+    
+    if (!tiempoInicioTraining) tiempoInicioTraining = Date.now();
+    
+    const textoIngresado = input.value;
+    const ultimoCharIngresado = textoIngresado[textoIngresado.length - 1];
+    const charEsperado = codigoObjetivo[caracteresTipeadosCorrectos];
+    
+    // Si coincide el carácter esperado
+    if (ultimoCharIngresado === charEsperado) {
+        caracteresTipeadosCorrectos++;
+        actualizarPantallaGuia();
+        
+        // Calcular Estadísticas
+        const tiempoTranscurrido = (Date.now() - tiempoInicioTraining) / 1000 / 60; // En minutos
+        if (tiempoTranscurrido > 0) {
+            const cpm = Math.round(caracteresTipeadosCorrectos / tiempoTranscurrido);
+            document.getElementById('stat-cpm').innerText = cpm;
+        }
+        
+        const totalIntentos = caracteresTipeadosCorrectos + totalErroresCometidos;
+        const precision = totalIntentos > 0 ? Math.round((caracteresTipeadosCorrectos / totalIntentos) * 100) : 100;
+        document.getElementById('stat-precision').innerText = `${precision}%`;
+        
+        // Verificar si completó el fragmento de código
+        if (caracteresTipeadosCorrectos === codigoObjetivo.length) {
+            alert("✨ ¡Excelente! Fragmento de código fijado en memoria muscular con éxito.");
+            reiniciarEjercicio();
+        }
+    } else {
+        // Si se equivoca, borramos el último caracter del input para obligarlo a presionar la tecla correcta
+        totalErroresCometidos++;
+        input.value = textoIngresado.substring(0, textoIngresado.length - 1);
+        
+        // Efecto visual rápido de error en las estadísticas de precisión
+        const totalIntentos = caracteresTipeadosCorrectos + totalErroresCometidos;
+        const precision = Math.round((caracteresTipeadosCorrectos / totalIntentos) * 100);
+        document.getElementById('stat-precision').innerText = `${precision}%`;
+        document.getElementById('stat-precision').style.color = '#ff5555';
+        setTimeout(() => { document.getElementById('stat-precision').style.color = '#00ff66'; }, 300);
+    }
+}
+
+// Inicializar de manera diferida una vez inyectado en el DOM
+setTimeout(inicializarMecanografia, 250);
+</script>
