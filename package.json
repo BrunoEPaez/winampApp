@@ -13,5 +13,8 @@
   "type": "commonjs",
   "devDependencies": {
     "electron": "^42.3.0"
+  },
+  "dependencies": {
+    "@distube/ytdl-core": "^4.16.12"
   }
 }

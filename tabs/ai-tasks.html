@@ -1,30 +1,30 @@
-<div class="workspace-layout" style="display: flex; width: 100%; height: 100%; background: #243146; overflow: hidden; margin-top: 0px; gap: 8px; padding: 5px; box-sizing: border-box;">
+<div class="workspace-layout" style="display: flex; width: 100%; height: 100%; background: #243146; overflow: hidden; gap: 8px; padding: 5px; box-sizing: border-box;">
     
     <div style="flex: 1; background: #1e293b; border: 1px solid #3d4f6e; border-radius: 4px; display: flex; flex-direction: column; padding: 10px; box-sizing: border-box; overflow-y: auto;">
         <div class="sidebar-title" style="color: #00ff66; font-size: 11px; font-weight: bold; margin-bottom: 8px;">🧠 CYBER AI LAB GENERATOR</div>
         
         <div style="display: flex; flex-direction: column; gap: 8px;">
             <div>
-                <label style="font-size: 11px; color: #888; display: block; margin-bottom: 4px;">PROMPT CREATIVO (Imágenes / Video / Música):</label>
-                <textarea id="ai-prompt-input" style="width: 100%; height: 60px; background: #161f2c; border: 1px solid #7000ff; color: #00d4ff; font-family: monospace; font-size: 12px; padding: 6px; box-sizing: border-box; outline: none; border-radius: 3px;" placeholder="Escribí tu prompt acá..."></textarea>
+                <label style="font-size: 11px; color: #cbd5e0; display: block; margin-bottom: 4px;">PROMPT MULTIMEDIA CRÍTICO:</label>
+                <textarea id="ai-prompt-input" style="width: 100%; height: 60px; background: #161f2c; border: 1px solid #7000ff; color: #00d4ff; font-family: monospace; font-size: 12px; padding: 6px; box-sizing: border-box; outline: none; border-radius: 3px;" placeholder="Describí la imagen, video o estructura musical que querés generar..."></textarea>
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
-                <button onclick="generarContenidoIA('imagen')" style="font-size: 11px; background: #2e3d54; border-color: #00ff66; color: #fff;">🖼️ GEN IMAGEN</button>
-                <button onclick="generarContenidoIA('video')" style="font-size: 11px; background: #2e3d54; border-color: #00ff66; color: #fff;">🎬 GEN VIDEO</button>
-                <button onclick="generarContenidoIA('musica')" style="font-size: 11px; background: #2e3d54; border-color: #a855f7; color: #fff; grid-column: span 2;">🎵 GEN MÚSICA (STYLE TRACK)</button>
+                <button onclick="generarContenidoIA('imagen')" style="font-size: 11px; background: #2e3d54; border-color: #00ff66; color: #fff; cursor: pointer;">🖼️ GEN IMAGEN</button>
+                <button onclick="generarContenidoIA('video')" style="font-size: 11px; background: #2e3d54; border-color: #00ff66; color: #fff; cursor: pointer;">🎬 GEN VIDEO</button>
+                <button onclick="generarContenidoIA('musica')" style="font-size: 11px; background: #2e3d54; border-color: #a855f7; color: #fff; grid-column: span 2; cursor: pointer;">🎵 GEN MÚSICA (VOCAL MIX / BEAT STYLE)</button>
             </div>
 
-            <div id="ai-monitor-output" style="background: #0f1520; border: 1px dashed #3d4f6e; padding: 8px; border-radius: 3px; font-size: 11px; min-height: 80px; color: #cbd5e0; white-space: pre-wrap; font-family: monospace;">[AI STATUS]: Listo para procesar requerimientos de contenido multimedia...</div>
+            <div id="ai-monitor-output" style="background: #0f1520; border: 1px dashed #3d4f6e; padding: 8px; border-radius: 3px; font-size: 11px; min-height: 120px; color: #cbd5e0; white-space: pre-wrap; font-family: monospace; overflow-y: auto; max-height: 200px;">[AI STATUS]: Listo para procesar requerimientos de contenido multimedia...</div>
         </div>
 
         <div style="margin-top: 15px; border-top: 1px dashed #3d4f6e; padding-top: 10px;">
-            <div class="sidebar-title" style="color: #00d4ff; font-size: 10px; margin-bottom: 5px;">⚡ SCRAPPER / DESCARGADOR OFFLINE</div>
-            <input type="text" id="scrapper-url-input" style="width: 100%; background: #161f2c; border: 1px solid #3d4f6e; color: #00d4ff; padding: 6px; font-size: 11px; font-family: monospace; box-sizing: border-box; outline: none; border-radius: 3px;" placeholder="Pegar URL de video o audio de estudio...">
+            <div class="sidebar-title" style="color: #00d4ff; font-size: 10px; margin-bottom: 5px;">⚡ SCRAPPER / DESCARGADOR OFFLINE REAL</div>
+            <input type="text" id="scrapper-url-input" style="width: 100%; background: #161f2c; border: 1px solid #3d4f6e; color: #00ff66; padding: 6px; font-size: 11px; font-family: monospace; box-sizing: border-box; outline: none; border-radius: 3px;" placeholder="Pegar URL de YouTube, SoundCloud, etc...">
             
             <div style="display: flex; gap: 4px; margin-top: 4px;">
-                <button onclick="ejecutarDescargaRecurso('audio')" style="flex-grow: 1; font-size: 10px; padding: 4px;">🎵 Extraer Audio</button>
-                <button onclick="ejecutarDescargaRecurso('file')" style="flex-grow: 1; font-size: 10px; padding: 4px;">💾 Bajar Binario</button>
+                <button onclick="ejecutarDescargaDesdeInput('audio')" style="flex-grow: 1; font-size: 10px; padding: 6px; background: #2e3d54; color: #00ff66; border: 1px solid #00ff66; cursor: pointer; font-weight: bold;">🎵 Extraer Audio (MP3)</button>
+                <button onclick="ejecutarDescargaDesdeInput('video')" style="flex-grow: 1; font-size: 10px; padding: 6px; background: #00ff66; color: #1e293b; border: 1px solid #00ff66; cursor: pointer; font-weight: bold;">💾 Bajar Video (MP4)</button>
             </div>
         </div>
     </div>
@@ -32,33 +32,29 @@
     <div style="flex: 2; background: #161f2c; border: 1px solid #3d4f6e; border-radius: 4px; display: flex; flex-direction: column; padding: 10px; box-sizing: border-box; overflow: hidden;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <div class="sidebar-title" style="color: #a855f7; font-size: 11px; font-weight: bold; margin-bottom: 0;">📋 TABLERO KANBAN DE ESTUDIO LOCAL</div>
-            <button onclick="agregarNuevaTareaKanban()" style="font-size: 10px; padding: 2px 6px; background: #7000ff; border-color: #00d4ff; color: #fff;">+ Nueva Tarea</button>
+            <button onclick="agregarNuevaTareaKanban()" style="font-size: 10px; padding: 2px 6px; background: #7000ff; border-color: #00d4ff; color: #fff; cursor: pointer; font-weight: bold;">+ Nueva Tarea</button>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; flex-grow: 1; overflow: hidden;">
-            
             <div style="background: #1e293b; padding: 6px; border-radius: 4px; display: flex; flex-direction: column; overflow: hidden;">
                 <div style="font-size: 11px; font-weight: bold; color: #ff5555; text-align: center; border-bottom: 1px solid #ff5555; padding-bottom: 4px; margin-bottom: 6px;">POR HACER</div>
                 <div id="kanban-col-todo" style="flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
             </div>
-
             <div style="background: #1e293b; padding: 6px; border-radius: 4px; display: flex; flex-direction: column; overflow: hidden;">
                 <div style="font-size: 11px; font-weight: bold; color: #00d4ff; text-align: center; border-bottom: 1px solid #00d4ff; padding-bottom: 4px; margin-bottom: 6px;">ESTUDIANDO</div>
                 <div id="kanban-col-progress" style="flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
             </div>
-
             <div style="background: #1e293b; padding: 6px; border-radius: 4px; display: flex; flex-direction: column; overflow: hidden;">
                 <div style="font-size: 11px; font-weight: bold; color: #00ff66; text-align: center; border-bottom: 1px solid #00ff66; padding-bottom: 4px; margin-bottom: 6px;">DOMINADO</div>
                 <div id="kanban-col-done" style="flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;"></div>
             </div>
-
         </div>
     </div>
 
 </div>
 
 <script>
-// Lógica interna del Tablero Kanban persistente en archivo .json local
+// Capturamos el entorno de Node de manera segura herodada
 const pathNode = require('path');
 const fsNode = require('fs');
 const rutaArchivoKanban = pathNode.join(__dirname, 'kanban_estudio.json');
@@ -76,14 +72,14 @@ function cargarKanbanDeDisco() {
         } else {
             guardarKanbanEnDisco();
         }
-    } catch (e) { console.error("Error leyendo Kanban:", e); }
+    } catch (e) { console.error(e); }
     renderizarTableroKanban();
 }
 
 function guardarKanbanEnDisco() {
     try {
         fsNode.writeFileSync(rutaArchivoKanban, JSON.stringify(tareasKanban, null, 2), 'utf-8');
-    } catch (e) { console.error("Error guardando Kanban:", e); }
+    } catch (e) { console.error(e); }
 }
 
 function renderizarTableroKanban() {
@@ -92,10 +88,7 @@ function renderizarTableroKanban() {
         progress: document.getElementById('kanban-col-progress'),
         done: document.getElementById('kanban-col-done')
     };
-    
     if(!cols.todo || !cols.progress || !cols.done) return;
-    
-    // Limpiar columnas
     Object.values(cols).forEach(c => c.innerHTML = "");
 
     tareasKanban.forEach(t => {
@@ -106,29 +99,26 @@ function renderizarTableroKanban() {
         const filaBotones = document.createElement('div');
         filaBotones.style = "display: flex; justify-content: space-between; margin-top: 4px;";
 
-        // Botón de Retroceso de columna
         if (t.estado !== 'todo') {
             const btnBack = document.createElement('button');
             btnBack.innerText = "◀";
-            btnBack.style = "padding: 1px 4px; font-size: 9px;";
+            btnBack.style = "padding: 1px 4px; font-size: 9px; cursor: pointer;";
             btnBack.onclick = () => moverTarea(t.id, t.estado === 'done' ? 'progress' : 'todo');
             filaBotones.appendChild(btnBack);
         } else {
             filaBotones.appendChild(document.createElement('span'));
         }
 
-        // Botón Eliminar
         const btnDel = document.createElement('button');
         btnDel.innerText = "❌";
-        btnDel.style = "padding: 1px 4px; font-size: 9px; border-color: #ff5555; background: transparent; color: #ff5555;";
+        btnDel.style = "padding: 1px 4px; font-size: 9px; border-color: #ff5555; background: transparent; color: #ff5555; cursor: pointer;";
         btnDel.onclick = () => eliminarTareaKanban(t.id);
         filaBotones.appendChild(btnDel);
 
-        // Botón de Avance de columna
         if (t.estado !== 'done') {
             const btnNext = document.createElement('button');
             btnNext.innerText = "▶";
-            btnNext.style = "padding: 1px 4px; font-size: 9px;";
+            btnNext.style = "padding: 1px 4px; font-size: 9px; cursor: pointer;";
             btnNext.onclick = () => moverTarea(t.id, t.estado === 'todo' ? 'progress' : 'done');
             filaBotones.appendChild(btnNext);
         }
@@ -141,8 +131,7 @@ function renderizarTableroKanban() {
 function agregarNuevaTareaKanban() {
     const titulo = prompt("¿Qué concepto o código vas a traquear?");
     if (!titulo) return;
-    const nueva = { id: Date.now(), titulo: titulo, estado: 'todo' };
-    tareasKanban.push(nueva);
+    tareasKanban.push({ id: Date.now(), titulo: titulo, estado: 'todo' });
     guardarKanbanEnDisco();
     renderizarTableroKanban();
 }
@@ -159,37 +148,48 @@ function eliminarTareaKanban(id) {
     renderizarTableroKanban();
 }
 
-// =========================================================================
-// INTEGRACIÓN NATIVA: SIMULACIÓN DE OPERATIVIDAD IA / SCRAPPER NATIVO
-// =========================================================================
 function generarContenidoIA(tipo) {
     const promptTxt = document.getElementById('ai-prompt-input').value.trim();
     const monitor = document.getElementById('ai-monitor-output');
     if (!promptTxt) { alert("Escribí un prompt primero."); return; }
-
     monitor.innerText = `[PROCESANDO NÚCLEO IA]: Generando ${tipo.toUpperCase()} basada en prompt...\n"${promptTxt}"`;
-    
-    // Aquí podés acoplar mediante un fetch() tu servidor local de Ollama (IA de texto)
-    // o scripts de Python que hagan peticiones a APIs generativas (Stable Diffusion, Suno, etc.)
     setTimeout(() => {
-        monitor.innerText += `\n\n✨ [PRODUCCIÓN COMPLETADA]: El recurso de tipo [${tipo.toUpperCase()}] se ha procesado con éxito de forma local y simulada.\nPara acoplar un backend real, conecta tu API key o endpoint en tabs/ai-tasks.html.`;
+        monitor.innerText += `\n\n✨ [PRODUCCIÓN COMPLETADA]: El recurso [${tipo.toUpperCase()}] se procesó correctamente en tu entorno local simulado.`;
     }, 2000);
 }
 
-function ejecutarDescargaRecurso(modo) {
-    const url = document.getElementById('scrapper-url-input').value.trim();
-    if (!url) { alert("Ingresá una URL válida de estudio."); return; }
-    
+// 💥 PUENTE INTEGRADO CON EL SCRIPT CONTROLADOR-DESCARGAS.JS NATIVO
+function ejecutarDescargaDesdeInput(modo) {
+    const inputOriginal = document.getElementById('scrapper-url-input');
     const monitor = document.getElementById('ai-monitor-output');
-    monitor.innerText = `[SCRAPPER RUNNING]: Descargando recurso en segundo plano (${modo})...\nURL: ${url}`;
     
-    // Al estar en Electron, podés mandar a ejecutar de forma nativa binarios como yt-dlp o wget vía terminal oculta
-    // Ejemplo real: exec(\`yt-dlp -x --audio-format mp3 "\${url}"\`, (err, stdout, stderr) => { ... })
-    setTimeout(() => {
-        monitor.innerText += `\n\n💾 [DESCARGA TERMINADA]: Recurso acoplado a la carpeta del sistema de forma offline. El audio/archivo se encuentra listo para indexarse a tus playlists de estudio.`;
-    }, 2500);
+    if (!inputOriginal || !inputOriginal.value.trim()) { 
+        alert("Ingresá una URL de video o audio primero."); 
+        return; 
+    }
+
+    // Redirigimos la terminal de logs interna al monitor unificado para que veas el progreso paso a paso
+    window.outputDescargadorId = 'ai-monitor-output'; 
+    
+    // Sincronizamos el input con el que espera el controlador central
+    // Para que funcione de forma transparente, creamos o inyectamos el valor en el puente global
+    let inputPuente = document.getElementById('inputUrlDescarga');
+    if(!inputPuente) {
+        inputPuente = document.createElement('input');
+        inputPuente.id = 'inputUrlDescarga';
+        inputPuente.style.display = 'none';
+        document.body.appendChild(inputPuente);
+    }
+    inputPuente.value = inputOriginal.value.trim();
+
+    // Invocamos la descarga real de yt-dlp del archivo js/controlador-descargas.js
+    if (typeof window.descargarRecurso === 'function') {
+        window.descargarRecurso(modo);
+    } else {
+        monitor.innerText = `❌ ERROR DE ENLACE: No se detectó 'js/controlador-descargas.js' cargado en index.html.`;
+    }
 }
 
-// Levantar el estado físico del Kanban al renderizar la pestaña
+// Inicialización asíncrona del Kanban
 setTimeout(cargarKanbanDeDisco, 250);
 </script>

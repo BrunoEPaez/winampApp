@@ -1,34 +1,38 @@
-<div class="browser-container" style="display: flex; flex-direction: column; width: 100%; height: 100%; background: #1a2433; box-sizing: border-box; padding: 4px; gap: 4px;">
+<div class="browser-container" style="display: flex; flex-direction: column; width: 100%; height: 100%; background: #161f2c; box-sizing: border-box; padding: 4px; gap: 4px; overflow: hidden; position: relative;">
     
-    <div id="browser-tabs-bar" style="display: flex; gap: 4px; background: #161f2c; padding: 4px 6px 0 6px; border-bottom: 1px solid #2b3a52; overflow-x: auto; align-items: flex-end;">
-        <button onclick="crearNuevaPestanaWeb()" style="background: transparent; color: #a855f7; border: 1px dashed #a855f7; padding: 2px 8px; font-size: 11px; cursor: pointer; border-radius: 3px 3px 0 0; font-weight: bold; margin-bottom: 2px;">+ Nueva</button>
+    <div id="browser-tabs-bar" style="display: flex; gap: 4px; background: #0f1520; padding: 4px 6px 0 6px; border-bottom: 1px solid #2b3a52; overflow-x: auto; align-items: flex-end; height: 32px; min-height: 32px; max-height: 32px; box-sizing: border-box;">
+        <button onclick="window.crearNuevaPestanaWeb()" style="background: transparent; color: #a855f7; border: 1px dashed #a855f7; padding: 2px 8px; font-size: 11px; cursor: pointer; border-radius: 3px 3px 0 0; font-weight: bold; margin-bottom: 2px;">+ Nueva</button>
     </div>
 
-    <div class="browser-bar" style="display: flex; gap: 4px; align-items: center; background: #1e293b; padding: 4px; border-radius: 3px;">
-        <button style="background: #2e3d54; color: #00d4ff; border: 1px solid #3d4f6e; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="navegacionPestana('back')">◀</button>
-        <button style="background: #2e3d54; color: #00d4ff; border: 1px solid #3d4f6e; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="navegacionPestana('forward')">▶</button>
-        <button style="background: #2e3d54; color: #00d4ff; border: 1px solid #3d4f6e; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="navegacionPestana('reload')">🔄</button>
+    <div class="browser-bar" style="display: flex; gap: 4px; align-items: center; background: #1e293b; padding: 4px; border-radius: 3px; height: 36px; min-height: 36px; max-height: 36px; box-sizing: border-box;">
+        <button style="background: #2e3d54; color: #00d4ff; border: 1px solid #3d4f6e; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; border-radius: 3px;" onclick="window.navegacionPestana('back')">◀</button>
+        <button style="background: #2e3d54; color: #00d4ff; border: 1px solid #3d4f6e; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; border-radius: 3px;" onclick="window.navegacionPestana('forward')">▶</button>
+        <button style="background: #2e3d54; color: #00d4ff; border: 1px solid #3d4f6e; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; border-radius: 3px;" onclick="window.navegacionPestana('reload')">🔄</button>
         
-        <input type="text" class="browser-input" id="browser-url" value="https://google.com" onkeydown="navegarUrl(event)" style="flex-grow: 1; background: #161f2c; border: 1px solid #7000ff; color: #00d4ff; padding: 6px; font-family: monospace; outline: none; border-radius: 3px;">
+        <input type="text" id="browser-url-input" placeholder="Escribe una URL o busca en Google..." onkeyup="if(event.key === 'Enter') window.irAUrl()" style="flex-grow: 1; background: #161f2c; border: 1px solid #3d4f6e; color: #00d4ff; padding: 6px; font-family: monospace; outline: none; border-radius: 3px; font-size: 12px; height: 26px; box-sizing: border-box;">
         
-        <button style="background: #3a4b66; color: #00d4ff; border: 1px solid #7000ff; padding: 6px 14px; cursor: pointer; font-family: monospace; font-weight: bold; border-radius: 3px;" onclick="irAUrl()">IR</button>
-        <button style="background: #2e3d54; color: #00d4ff; border: 1px solid #3d4f6e; padding: 6px 10px; cursor: pointer; font-size: 11px;" id="btn-fav-actual" onclick="alternarFavoritoActual()">⭐</button>
-        <button style="background: #2e3d54; color: #00d4ff; border: 1px solid #3d4f6e; padding: 6px 10px; cursor: pointer; font-size: 11px;" onclick="alternarPanelLateral()">Panel</button>
+        <button style="background: #2e3d54; color: #00d4ff; border: 1px solid #3d4f6e; padding: 0 10px; height: 26px; cursor: pointer; font-size: 11px; font-weight: bold; border-radius: 3px;" onclick="window.alternarPanelLateral()">Panel</button>
+        
+        <button style="background: #ef4444; color: white; border: 1px solid #b91c1c; padding: 0 10px; height: 26px; cursor: pointer; font-size: 11px; font-weight: bold; border-radius: 3px;" onclick="window.reiniciarMotorBrowser()">Fuerza Bruta</button>
     </div>
 
-    <div style="display: flex; flex-grow: 1; width: 100%; position: relative; gap: 4px; overflow: hidden;">
-        
-        <div id="browser-webviews-container" style="flex-grow: 1; height: 100%; background: white; position: relative;"></div>
+    <div style="position: absolute; top: 76px; bottom: 0; left: 4px; right: 4px; display: flex; gap: 4px; overflow: hidden; background: #161f2c; box-sizing: border-box;">
+        <div id="browser-webviews-container" style="flex-grow: 1; height: 100%; position: relative; background: #161f2c; overflow: hidden;">
+            <style>
+                #browser-webviews-container webview {
+                    position: absolute !important;
+                    top: 0 !important; left: 0 !important;
+                    width: 100% !important; height: 100% !important;
+                    border: none !important;
+                    background: #161f2c !important;
+                    display: none;
+                }
+            </style>
+        </div>
 
-        <div id="browser-sidebar" style="display: none; width: 200px; background: #161f2c; border-left: 1px solid #3d4f6e; flex-direction: column; padding: 8px; box-sizing: border-box;">
-            <div style="font-size: 10px; font-weight: bold; color: #a855f7; margin-bottom: 6px;">⭐ FAVORITOS</div>
+        <div id="browser-sidebar" style="display: none; width: 200px; height: 100%; background: #0f1520; border-left: 1px solid #3d4f6e; flex-direction: column; padding: 8px; box-sizing: border-box;">
+            <div style="font-size: 10px; font-weight: bold; color: #a855f7; margin-bottom: 6px; margin-family: monospace;">⭐ FAVORITOS</div>
             <div id="lista-favoritos" style="flex-grow: 1; overflow-y: auto; font-size: 11px; display: flex; flex-direction: column; gap: 2px;"></div>
-            
-            <div style="font-size: 10px; font-weight: bold; color: #a855f7; margin-top: 15px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-                <span>📜 HISTORIAL</span>
-                <button style="background: #6b21a8; color: #fff; border: none; font-size: 9px; padding: 2px 4px; cursor: pointer;" onclick="limpiarHistorialCompleto()">Borrar</button>
-            </div>
-            <div id="lista-historial" style="flex-grow: 1; overflow-y: auto; font-size: 11px; display: flex; flex-direction: column; gap: 2px;"></div>
         </div>
     </div>
 </div>

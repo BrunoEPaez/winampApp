@@ -5,98 +5,152 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ultimate Cyber-Environment Modular</title>
     <style>
-        /* ESTILOS GLOBALES Y PALETA GRIS AZULADO FRANCIA */
+        /* RESET ESTRICTO - Elimina márgenes de Chromium que causan bloques blancos */
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
+        
         body {
             background-color: #243146;
             color: #00d4ff;
             font-family: monospace;
-            margin: 10px; padding: 0;
-            display: flex; flex-direction: column;
-            height: calc(100vh - 20px); overflow: hidden;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
         }
+
+        /* BARRA DE PESTAÑAS PRINCIPALES (Altura fija y bloqueada a 35px) */
         .tabs-container {
-            display: flex; gap: 5px; background: #243146;
-            padding-bottom: 5px; border-bottom: 1px solid #3d4f6e; z-index: 1000;
+            display: flex;
+            gap: 5px;
+            background: #243146;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #3d4f6e;
+            height: 35px;
+            min-height: 35px;
+            max-height: 35px;
+            z-index: 1000;
         }
         .tab-btn {
             background: #1e293b; color: #00d4ff; border: 1px solid #7000ff;
-            padding: 6px 14px; cursor: pointer; font-family: monospace;
+            padding: 4px 12px; cursor: pointer; font-family: monospace;
             font-weight: bold; border-radius: 4px 4px 0 0; font-size: 11px; outline: none;
         }
-        .tab-btn:hover { background: #7000ff; color: #fff; }
+        .tab-btn:hover { background: #7000ff; color: white; }
         .tab-btn.active {
-            background: #00d4ff; color: #121824;
-            box-shadow: 0px 0px 12px rgba(0, 212, 255, 0.5); border-color: #00d4ff;
+            background: #00d4ff; color: #1e293b; border-color: #00d4ff;
         }
-        .view-section { display: none; flex-grow: 1; height: calc(100% - 35px); }
-        .view-section.active { display: flex; flex-direction: column; }
 
-        /* ESTILOS COMPARTIDOS POR LOS MÓDULOS */
-        .winamp-box { background: #2e3d54; border: 3px double #7000ff; padding: 20px; width: 380px; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); margin-top: 10px; }
-        .info-tema { background: #1a2433; padding: 8px; border: 1px inset #3d4f6e; font-size: 12px; margin-bottom: 10px; text-overflow: ellipsis; overflow: hidden; color: #00d4ff; }
-        .controles { display: flex; flex-direction: column; gap: 10px; }
-        .fila-botones { display: flex; gap: 5px; justify-content: space-between; }
-        .fila-volumen { display: flex; align-items: center; gap: 10px; background: #1a2433; padding: 5px; }
-        .fila-volumen input { flex-grow: 1; accent-color: #00d4ff; }
-        .button, button { background: #3a4b66; color: #00d4ff; border: 1px solid #7000ff; padding: 6px 10px; cursor: pointer; font-family: monospace; font-weight: bold; border-radius: 3px; }
-        button:hover, button.activo { background: #00d4ff; color: #121824; border-color: #00d4ff; }
-        input[type="file"] { display: none; }
-        .playlist-box { background: #1a2433; border: 1px solid #3d4f6e; max-height: 120px; overflow-y: auto; margin-top: 10px; padding: 5px; font-size: 11px; }
-        .track { padding: 4px; cursor: pointer; color: #cbd5e0; }
-        .track:hover { background: #3a4b66; color: #fff; }
-        .track.seleccionada { color: #121824; background: #00d4ff; font-weight: bold; }
+        /* CONTENEDOR MAESTRO DE VISTAS (Clava el alto restante de la pantalla) */
+        .views-master-wrapper {
+            position: relative;
+            flex-grow: 1;
+            width: 100%;
+            height: calc(100vh - 55px);
+            background: #161f2c;
+            overflow: hidden;
+        }
         
-        .workspace-layout { display: flex; width: 100%; flex-grow: 1; background: #2b3a52; border: 1px solid #3d4f6e; border-radius: 4px; margin-top: 5px; height: 100%; overflow: hidden; }
-        .sidebar { width: 240px; background: #1e293b; border-right: 1px solid #3d4f6e; display: flex; flex-direction: column; padding: 10px; box-sizing: border-box; height: 100%; }
-        .sidebar-title { font-size: 11px; font-weight: bold; color: #a855f7; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        .list-tree { flex-grow: 1; overflow-y: auto; font-size: 12px; color: #cbd5e0; }
-        .tree-item { padding: 6px 8px; cursor: pointer; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; width: 100%; box-sizing: border-box; }
-        .tree-item:hover { background: #3a4b66; color: #00d4ff; }
-        .tree-item.activo { background: #7000ff; color: #fff; font-weight: bold; box-shadow: 0 0 8px rgba(112,0,255,0.4); }
+        /* SECCIONES DE VISTA (Absolutas e independientes) */
+        .view-section {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            display: none; 
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #161f2c;
+        }
         
-        .main-content-area { flex-grow: 1; display: flex; flex-direction: column; background: #243146; position: relative; height: 100%; }
-        #editor-monaco { flex-grow: 1; width: 100%; height: 60%; min-height: 200px; background: #1e1e1e; }
+        /* Forzamos que la pestaña activa se dibuje por encima de todo */
+        .view-section.active {
+            display: flex !important;
+            z-index: 10;
+        }
+
+        /* Motor de Webview blindado contra fondos blancos nativos */
+        webview { 
+            width: 100% !important; 
+            height: 100% !important; 
+            background-color: #161f2c !important;
+            display: block;
+        }
+
+        /* Estilos compartidos para listas en árbol y layouts */
+        .workspace-layout { display: flex; width: 100%; height: 100%; gap: 10px; }
+        .sidebar { width: 220px; background: #1e293b; border-right: 1px solid #3d4f6e; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .sidebar-title { font-size: 11px; font-weight: bold; color: #a855f7; text-transform: uppercase; margin-bottom: 4px; }
+        .list-tree { flex-grow: 1; overflow-y: auto; background: #161f2c; border: 1px solid #3d4f6e; padding: 5px; border-radius: 3px; }
+        .tree-item { padding: 4px; font-size: 12px; color: #cbd5e0; border-radius: 2px; }
+        .tree-item:hover { background: #243146; color: #00d4ff; }
+        .tree-item.activo { background: #7000ff; color: white; font-weight: bold; }
+        .main-content-area { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; background: #1a2433; }
         
-        .bottom-panel-terminal { height: 180px; background: #161f2c; border-top: 1px solid #3d4f6e; display: flex; flex-direction: column; }
-        .terminal-header { background: #1e293b; padding: 6px 10px; font-size: 11px; color: #00d4ff; border-bottom: 1px solid #3d4f6e; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        .terminal-output { flex-grow: 1; padding: 8px; overflow-y: auto; color: #fff; font-size: 12px; white-space: pre-wrap; font-family: 'Courier New', Courier, monospace; }
-        .terminal-input-row { display: flex; background: #0f1520; border-top: 1px solid #3d4f6e; padding: 6px; }
-        .terminal-prompt { color: #7000ff; padding-right: 5px; font-weight: bold; }
-        .terminal-input { flex-grow: 1; background: transparent; border: none; color: #fff; font-family: monospace; font-size: 12px; outline: none; }
+        /* Botonera Winamp-style */
+        .winamp-box { background: #1e293b; border: 2px solid #7000ff; border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); margin: auto; }
+        .info-tema { background: #0f1520; padding: 6px; border: 1px solid #3d4f6e; text-align: center; font-size: 11px; color: #00d4ff; font-weight: bold; letter-spacing: 1px; }
+        .controles { display: flex; flex-direction: column; gap: 6px; }
+        .fila-botones { display: flex; gap: 4px; justify-content: center; }
+        .fila-botones button, button.button { background: #2e3d54; color: #00d4ff; border: 1px solid #3d4f6e; padding: 5px 10px; font-family: monospace; font-size: 11px; font-weight: bold; cursor: pointer; border-radius: 3px; }
+        .fila-botones button:hover, button.button:hover { background: #7000ff; color: white; }
+        .fila-botones button.activo, button.button.activo { background: #00d4ff; color: #1e293b; border-color: #00d4ff; }
+        .playlist-box { background: #161f2c; border: 1px solid #3d4f6e; height: 150px; overflow-y: auto; padding: 4px; display: flex; flex-direction: column; gap: 2px; }
+        .track { padding: 5px; font-size: 11px; color: #a0aec0; cursor: pointer; border-radius: 2px; }
+        .track:hover { background: #243146; color: #00d4ff; }
+        .track.seleccionada { background: rgba(112, 0, 255, 0.3); color: #00d4ff; font-weight: bold; border-left: 3px solid #7000ff; }
+        .fila-volumen { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 11px; margin-top: 4px; }
+        .fila-volumen input[type=range] { flex-grow: 0; width: 100px; accent-color: #00d4ff; }
+
+        /* Terminal e inputs */
+        #editor-monaco { flex-grow: 1; border: 1px solid #3d4f6e; border-radius: 4px; background: #1e293b; min-height: 200px; }
+        .bottom-panel-terminal { height: 180px; background: #161f2c; border: 1px solid #3d4f6e; border-radius: 4px; display: flex; flex-direction: column; }
+        .terminal-header { background: #1e293b; padding: 6px 10px; font-size: 11px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3d4f6e; }
+        .terminal-output { flex-grow: 1; padding: 8px; overflow-y: auto; font-family: monospace; font-size: 12px; color: #cbd5e0; background: #0f1520; }
+        .terminal-input-row { display: flex; background: #1e293b; border-top: 1px solid #3d4f6e; padding: 4px; }
+        .terminal-input-row span { padding: 2px 6px; font-size: 12px; color: #a855f7; font-weight: bold; }
+        .terminal-input-row input { flex-grow: 1; background: transparent; border: none; color: #00d4ff; padding: 2px; font-family: monospace; font-size: 12px; outline: none; }
         
-        .browser-container { display: flex; flex-direction: column; width: 100%; height: 100%; background: #fff; border: 1px solid #3d4f6e; border-radius: 4px; margin-top: 5px; overflow: hidden; }
-        .browser-bar { display: flex; gap: 5px; background: #1e293b; padding: 5px; align-items: center; border-bottom: 1px solid #3d4f6e; }
-        .browser-input { flex-grow: 1; background: #161f2c; border: 1px solid #7000ff; color: #00d4ff; padding: 6px; font-family: monospace; outline: none; border-radius: 3px; }
-        webview { width: 100%; flex-grow: 1; background: white; }
+        .browser-bar input { flex-grow: 1; background: #161f2c; border: 1px solid #3d4f6e; color: #00d4ff; padding: 6px; font-family: monospace; outline: none; border-radius: 3px; }
         .obsidian-textarea { flex-grow: 1; background: #243146; color: #e2e8f0; border: none; padding: 15px; font-family: sans-serif; font-size: 15px; resize: none; outline: none; line-height: 1.6; height: 100%; }
     </style>
 </head>
 <body>
 
     <div class="tabs-container">
-        <button class="tab-btn active" id="btn-tab-audio" onclick="cambiarVista('audio', this)">🎵 AUDIO</button>
-        <button class="tab-btn" id="btn-tab-video" onclick="cambiarVista('video', this)">🎬 VIDEO</button>
-        <button class="tab-btn" id="btn-tab-editor" onclick="cambiarVista('editor', this)">📝 CODE</button>
-        <button class="tab-btn" id="btn-tab-browser" onclick="cambiarVista('browser', this)">🌐 BROWSER</button>
-        <button class="tab-btn" id="btn-tab-obsidian" onclick="cambiarVista('obsidian', this)">📓 OBSIDIAN</button>
-        <button class="tab-btn" id="btn-tab-bmo" onclick="cambiarVista('bmo', this)" style="border-color: #a855f7; color: #a855f7;">🤖 BMO</button>
-        <button class="tab-btn" id="btn-tab-type-training" onclick="cambiarVista('type-training', this)">⌨️ COPIER</button>
-        <button class="tab-btn" id="btn-tab-ai-tasks" onclick="cambiarVista('ai-tasks', this)" style="border-color: #00ff66; color: #00ff66;">⚡ AI & TASKS</button>
-
+        <button class="tab-btn active" id="btn-tab-audio" onclick="window.cambiarVista('audio', this)">🎵 AUDIO</button>
+        <button class="tab-btn" id="btn-tab-video" onclick="window.cambiarVista('video', this)">🎬 VIDEO</button>
+        <button class="tab-btn" id="btn-tab-editor" onclick="window.cambiarVista('editor', this)">📝 CODE</button>
+        <button class="tab-btn" id="btn-tab-browser" onclick="window.cambiarVista('browser', this)">🌐 BROWSER</button>
+        <button class="tab-btn" id="btn-tab-obsidian" onclick="window.cambiarVista('obsidian', this)">📓 OBSIDIAN</button>
+        <button class="tab-btn" id="btn-tab-type-training" onclick="window.cambiarVista('type-training', this)">⌨️ COPIER</button>
+        <button class="tab-btn" id="btn-tab-bmo" onclick="window.cambiarVista('bmo', this)">🤖 BMO</button>
+        <button class="tab-btn" id="btn-tab-ai-tasks" onclick="window.cambiarVista('ai-tasks', this)" style="border-color: #00ff66; color: #00ff66;">⚡ AI LAB</button>
     </div>
 
     <video id="reproductorGlobal" style="display: none;"></video>
 
-    <div id="vista-audio" class="view-section active"></div>
-    <div id="vista-video" class="view-section"></div>
-    <div id="vista-editor" class="view-section"></div>
-    <div id="vista-browser" class="view-section"></div>
-    <div id="vista-obsidian" class="view-section"></div>
-    <div id="vista-bmo" class="view-section"></div>
-    <div id="vista-type-training" class="view-section"></div>
-    <div id="vista-ai-tasks" class="view-section"></div>
+    <div class="views-master-wrapper">
+        <div id="vista-audio" class="view-section active"></div>
+        <div id="vista-video" class="view-section"></div>
+        <div id="vista-editor" class="view-section"></div>
+        <div id="vista-browser" class="view-section"></div>
+        <div id="vista-obsidian" class="view-section"></div>
+        <div id="vista-type-training" class="view-section"></div>
+        <div id="vista-bmo" class="view-section"></div>
+        <div id="vista-ai-tasks" class="view-section"></div>
+    </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
+    <!-- CARGA DE SCRIPTS CENTRALES EN ORDEN -->
     <script src="renderer.js"></script>
+    <script src="js/controlador-multimedia.js"></script>
+    <script src="js/controlador-navegador.js"></script> 
+    <script src="js/controlador-descargas.js"></script>
+    
+    <!-- Vinculamos el JS de video que está adentro de la subcarpeta según tu árbol -->
+    <script src="tabs/video/video.js"></script>
 </body>
 </html>
